@@ -22,9 +22,6 @@ use Symfony\Component\HttpFoundation\RequestStack;
  */
 class SecurityBlockerMerchantPortalGuiCommunicationFactory extends AbstractCommunicationFactory
 {
-    /**
-     * @return \Symfony\Component\EventDispatcher\EventSubscriberInterface
-     */
     public function createSecurityBlockerMerchantPortalUserEventSubscriber(): EventSubscriberInterface
     {
         return new SecurityBlockerMerchantPortalUserEventSubscriber(
@@ -35,9 +32,6 @@ class SecurityBlockerMerchantPortalGuiCommunicationFactory extends AbstractCommu
         );
     }
 
-    /**
-     * @return \Spryker\Zed\SecurityBlockerMerchantPortalGui\Communication\Builder\MessageBuilderInterface
-     */
     public function createMessageBuilder(): MessageBuilderInterface
     {
         return new MessageBuilder(
@@ -45,33 +39,21 @@ class SecurityBlockerMerchantPortalGuiCommunicationFactory extends AbstractCommu
         );
     }
 
-    /**
-     * @return \Spryker\Zed\SecurityBlockerMerchantPortalGui\Dependency\Client\SecurityBlockerMerchantPortalGuiToSecurityBlockerClientInterface
-     */
     public function getSecurityBlockerClient(): SecurityBlockerMerchantPortalGuiToSecurityBlockerClientInterface
     {
         return $this->getProvidedDependency(SecurityBlockerMerchantPortalGuiDependencyProvider::CLIENT_SECURITY_BLOCKER);
     }
 
-    /**
-     * @return \Spryker\Zed\SecurityBlockerMerchantPortalGui\Dependency\Facade\SecurityBlockerMerchantPortalGuiToGlossaryFacadeInterface
-     */
     public function getGlossaryFacade(): SecurityBlockerMerchantPortalGuiToGlossaryFacadeInterface
     {
         return $this->getProvidedDependency(SecurityBlockerMerchantPortalGuiDependencyProvider::FACADE_GLOSSARY);
     }
 
-    /**
-     * @return \Symfony\Component\HttpFoundation\RequestStack
-     */
     public function getRequestStack(): RequestStack
     {
         return $this->getProvidedDependency(SecurityBlockerMerchantPortalGuiDependencyProvider::SERVICE_REQUEST_STACK);
     }
 
-    /**
-     * @return string
-     */
     public function getLocale(): string
     {
         return $this->getProvidedDependency(SecurityBlockerMerchantPortalGuiDependencyProvider::SERVICE_LOCALE);

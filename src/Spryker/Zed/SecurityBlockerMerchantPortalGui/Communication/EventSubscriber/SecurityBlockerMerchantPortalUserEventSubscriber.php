@@ -71,12 +71,6 @@ class SecurityBlockerMerchantPortalUserEventSubscriber implements EventSubscribe
      */
     protected MessageBuilderInterface $messageBuilder;
 
-    /**
-     * @param \Symfony\Component\HttpFoundation\RequestStack $requestStack
-     * @param \Spryker\Zed\SecurityBlockerMerchantPortalGui\Dependency\Client\SecurityBlockerMerchantPortalGuiToSecurityBlockerClientInterface $securityBlockerClient
-     * @param \Spryker\Zed\SecurityBlockerMerchantPortalGui\Communication\Builder\MessageBuilderInterface $messageBuilder
-     * @param \Spryker\Zed\SecurityBlockerMerchantPortalGui\SecurityBlockerMerchantPortalGuiConfig $securityBlockerMerchantPortalGuiConfig
-     */
     public function __construct(
         RequestStack $requestStack,
         SecurityBlockerMerchantPortalGuiToSecurityBlockerClientInterface $securityBlockerClient,
@@ -100,9 +94,6 @@ class SecurityBlockerMerchantPortalUserEventSubscriber implements EventSubscribe
         ];
     }
 
-    /**
-     * @return void
-     */
     public function onAuthenticationFailure(): void
     {
         $request = $this->requestStack->getCurrentRequest();
@@ -148,11 +139,6 @@ class SecurityBlockerMerchantPortalUserEventSubscriber implements EventSubscribe
         );
     }
 
-    /**
-     * @param \Symfony\Component\HttpFoundation\Request $request
-     *
-     * @return bool
-     */
     protected function isLoginAttempt(Request $request): bool
     {
         $currentRoute = $request->attributes->get(static::ROUTE_KEY);
@@ -162,11 +148,6 @@ class SecurityBlockerMerchantPortalUserEventSubscriber implements EventSubscribe
             && $request->getMethod() === Request::METHOD_POST;
     }
 
-    /**
-     * @param \Symfony\Component\HttpFoundation\Request $request
-     *
-     * @return \Generated\Shared\Transfer\SecurityCheckAuthContextTransfer
-     */
     protected function createSecurityCheckAuthContextTransfer(Request $request): SecurityCheckAuthContextTransfer
     {
         return (new SecurityCheckAuthContextTransfer())

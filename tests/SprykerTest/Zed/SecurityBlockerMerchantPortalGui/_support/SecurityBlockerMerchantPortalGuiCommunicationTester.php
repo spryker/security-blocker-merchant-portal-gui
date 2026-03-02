@@ -52,11 +52,6 @@ class SecurityBlockerMerchantPortalGuiCommunicationTester extends Actor
      */
     protected const MERCHANT_PORTAL_LOGIN_CHECK_URL = 'security-merchant-portal-gui/login_check';
 
-    /**
-     * @param string $type
-     *
-     * @return \Generated\Shared\Transfer\SecurityCheckAuthContextTransfer
-     */
     public function createSecurityCheckAuthContextTransfer(string $type): SecurityCheckAuthContextTransfer
     {
         return (new SecurityCheckAuthContextTransfer())
@@ -64,12 +59,6 @@ class SecurityBlockerMerchantPortalGuiCommunicationTester extends Actor
             ->setIp('');
     }
 
-    /**
-     * @param string $method
-     * @param \Generated\Shared\Transfer\SecurityCheckAuthContextTransfer $securityCheckAuthContextTransfer
-     *
-     * @return \Symfony\Component\HttpFoundation\Request
-     */
     public function createRequest(string $method, SecurityCheckAuthContextTransfer $securityCheckAuthContextTransfer): Request
     {
         $request = Request::create(
