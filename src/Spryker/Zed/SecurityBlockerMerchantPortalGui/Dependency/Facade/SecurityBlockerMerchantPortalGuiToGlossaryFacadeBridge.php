@@ -25,11 +25,7 @@ class SecurityBlockerMerchantPortalGuiToGlossaryFacadeBridge implements Security
     }
 
     /**
-     * @param string $keyName
      * @param array<string, mixed> $data
-     * @param \Generated\Shared\Transfer\LocaleTransfer|null $localeTransfer
-     *
-     * @return string
      */
     public function translate(string $keyName, array $data = [], ?LocaleTransfer $localeTransfer = null): string
     {

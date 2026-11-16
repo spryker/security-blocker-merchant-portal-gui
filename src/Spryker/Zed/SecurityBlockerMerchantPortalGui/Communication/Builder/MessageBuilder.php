@@ -22,9 +22,6 @@ class MessageBuilder implements MessageBuilderInterface
      */
     protected const GLOSSARY_PARAM_MINUTES = '%minutes%';
 
-    /**
-     * @var \Spryker\Zed\SecurityBlockerMerchantPortalGui\Dependency\Facade\SecurityBlockerMerchantPortalGuiToGlossaryFacadeInterface
-     */
     protected SecurityBlockerMerchantPortalGuiToGlossaryFacadeInterface $glossaryFacade;
 
     public function __construct(SecurityBlockerMerchantPortalGuiToGlossaryFacadeInterface $glossaryFacade)

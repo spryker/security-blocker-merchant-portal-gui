@@ -52,13 +52,12 @@ class SecurityBlockerMerchantPortalUserEventSubscriberTest extends Unit
     protected const LOGIN_CHECK_URL = '/security-merchant-portal-gui/login_check';
 
     /**
-     * @var \SprykerTest\Zed\SecurityBlockerMerchantPortalGui\SecurityBlockerMerchantPortalGuiCommunicationTester
+     * @uses \Spryker\Zed\Captcha\Communication\EventSubscriber\LoginCaptchaEventSubscriber::KERNEL_REQUEST_SUBSCRIBER_PRIORITY
      */
+    protected const int CAPTCHA_SUBSCRIBER_PRIORITY = 10;
+
     protected SecurityBlockerMerchantPortalGuiCommunicationTester $tester;
 
-    /**
-     * @var \Spryker\Zed\SecurityBlockerMerchantPortalGui\Communication\EventSubscriber\SecurityBlockerMerchantPortalUserEventSubscriber
-     */
     protected SecurityBlockerMerchantPortalUserEventSubscriber $subscriber;
 
     /**
@@ -70,6 +69,20 @@ class SecurityBlockerMerchantPortalUserEventSubscriberTest extends Unit
      * @var \PHPUnit\Framework\MockObject\MockObject|\Symfony\Component\HttpFoundation\RequestStack
      */
     protected RequestStack $requestStackMock;
+
+    public function testBlockedLoginAttemptIsRejectedBeforeItsCaptchaIsVerified(): void
+    {
+        // Arrange
+        $securityCheckAuthContextTransfer = $this->tester->createSecurityCheckAuthContextTransfer(static::MERCHANT_PORTAL_USER_TYPE);
+        $this->securityBlockerClientMock->method('isAccountBlocked')->willReturn((new SecurityCheckAuthResponseTransfer())->setIsBlocked(true));
+        $eventDispatcher = $this->createEventDispatcherWithFailingCaptchaListener();
+
+        // Assert
+        $this->expectException(HttpException::class);
+
+        // Act
+        $eventDispatcher->dispatch($this->createRequestEventForMethod($securityCheckAuthContextTransfer, Request::METHOD_POST), KernelEvents::REQUEST);
+    }
 
     protected function setUp(): void
     {
@@ -215,6 +228,7 @@ class SecurityBlockerMerchantPortalUserEventSubscriberTest extends Unit
                 [
                     'getMerchantPortalUserLoginCheckUrl' => static::LOGIN_CHECK_URL,
                     'getSecurityBlockerMerchantPortalUserEntityType' => static::MERCHANT_PORTAL_USER_TYPE,
+                    'getIpCounterKeyStrategy' => SecurityBlockerMerchantPortalGuiConfig::IP_COUNTER_KEY_STRATEGY_IP,
                 ],
             ),
         );
@@ -223,5 +237,16 @@ class SecurityBlockerMerchantPortalUserEventSubscriberTest extends Unit
     protected function getMainRequestType(): int
     {
         return HttpKernelInterface::MAIN_REQUEST;
+    }
+
+    protected function createEventDispatcherWithFailingCaptchaListener(): EventDispatcher
+    {
+        $eventDispatcher = new EventDispatcher();
+        $eventDispatcher->addSubscriber($this->subscriber);
+        $eventDispatcher->addListener(KernelEvents::REQUEST, function (): void {
+            $this->fail('The CAPTCHA was verified before the blocked login attempt was rejected.');
+        }, static::CAPTCHA_SUBSCRIBER_PRIORITY);
+
+        return $eventDispatcher;
     }
 }

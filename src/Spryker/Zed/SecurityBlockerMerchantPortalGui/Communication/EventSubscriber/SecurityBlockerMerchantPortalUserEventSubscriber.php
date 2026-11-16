@@ -42,33 +42,23 @@ class SecurityBlockerMerchantPortalUserEventSubscriber implements EventSubscribe
     protected const ROUTE_KEY = '_route';
 
     /**
+     * Runs before the CAPTCHA check of the Captcha module (priority 10), so a blocked login is answered before its CAPTCHA is used.
+     *
      * @var int
      */
-    protected const KERNEL_REQUEST_SUBSCRIBER_PRIORITY = 9;
+    protected const KERNEL_REQUEST_SUBSCRIBER_PRIORITY = 11;
 
     /**
      * @var string
      */
     protected const AUTHENTICATION_FAILURE_EVENT = 'onAuthenticationFailure';
 
-    /**
-     * @var \Symfony\Component\HttpFoundation\RequestStack
-     */
     protected RequestStack $requestStack;
 
-    /**
-     * @var \Spryker\Zed\SecurityBlockerMerchantPortalGui\Dependency\Client\SecurityBlockerMerchantPortalGuiToSecurityBlockerClientInterface
-     */
     protected SecurityBlockerMerchantPortalGuiToSecurityBlockerClientInterface $securityBlockerClient;
 
-    /**
-     * @var \Spryker\Zed\SecurityBlockerMerchantPortalGui\SecurityBlockerMerchantPortalGuiConfig
-     */
     protected SecurityBlockerMerchantPortalGuiConfig $securityBlockerMerchantPortalGuiConfig;
 
-    /**
-     * @var \Spryker\Zed\SecurityBlockerMerchantPortalGui\Communication\Builder\MessageBuilderInterface
-     */
     protected MessageBuilderInterface $messageBuilder;
 
     public function __construct(
@@ -107,11 +97,7 @@ class SecurityBlockerMerchantPortalUserEventSubscriber implements EventSubscribe
     }
 
     /**
-     * @param \Symfony\Component\HttpKernel\Event\RequestEvent $event
-     *
      * @throws \Symfony\Component\HttpKernel\Exception\HttpException
-     *
-     * @return void
      */
     public function onKernelRequest(RequestEvent $event): void
     {
@@ -152,6 +138,16 @@ class SecurityBlockerMerchantPortalUserEventSubscriber implements EventSubscribe
     {
         return (new SecurityCheckAuthContextTransfer())
             ->setType($this->securityBlockerMerchantPortalGuiConfig->getSecurityBlockerMerchantPortalUserEntityType())
-            ->setIp($request->getClientIp());
+            ->setIp($request->getClientIp())
+            ->setLoginIdentifier($this->findSubmittedUsername($request))
+            ->setIpCounterKeyStrategy($this->securityBlockerMerchantPortalGuiConfig->getIpCounterKeyStrategy());
+    }
+
+    protected function findSubmittedUsername(Request $request): ?string
+    {
+        $loginForm = $request->request->all()[static::FORM_NAME] ?? null;
+        $username = is_array($loginForm) ? ($loginForm[static::FIELD_USERNAME] ?? null) : null;
+
+        return is_string($username) ? $username : null;
     }
 }

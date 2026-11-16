@@ -8,13 +8,17 @@
 namespace SprykerTest\Zed\SecurityBlockerMerchantPortalGui\Communication\Plugin;
 
 use Codeception\Test\Unit;
+use InvalidArgumentException;
+use PHPUnit\Framework\MockObject\MockObject;
 use Spryker\Service\Container\ContainerInterface;
 use Spryker\Shared\EventDispatcher\EventDispatcherInterface;
 use Spryker\Zed\Kernel\Container;
 use Spryker\Zed\SecurityBlockerMerchantPortalGui\Communication\Plugin\EventDispatcher\SecurityBlockerMerchantPortalUserEventDispatcherPlugin;
 use Spryker\Zed\SecurityBlockerMerchantPortalGui\Communication\SecurityBlockerMerchantPortalGuiCommunicationFactory;
+use Spryker\Zed\SecurityBlockerMerchantPortalGui\SecurityBlockerMerchantPortalGuiConfig;
 use Spryker\Zed\SecurityBlockerMerchantPortalGui\SecurityBlockerMerchantPortalGuiDependencyProvider;
 use SprykerTest\Zed\SecurityBlockerMerchantPortalGui\SecurityBlockerMerchantPortalGuiCommunicationTester;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Auto-generated group annotations
@@ -29,14 +33,10 @@ use SprykerTest\Zed\SecurityBlockerMerchantPortalGui\SecurityBlockerMerchantPort
  */
 class SecurityBlockerMerchantPortalUserEventDispatcherPluginTest extends Unit
 {
-    /**
-     * @var \SprykerTest\Zed\SecurityBlockerMerchantPortalGui\SecurityBlockerMerchantPortalGuiCommunicationTester
-     */
+    protected const string UNKNOWN_LOGIN_PROTECTION_STRATEGY = 'unknown';
+
     protected SecurityBlockerMerchantPortalGuiCommunicationTester $tester;
 
-    /**
-     * @var \Spryker\Zed\SecurityBlockerMerchantPortalGui\Communication\Plugin\EventDispatcher\SecurityBlockerMerchantPortalUserEventDispatcherPlugin
-     */
     protected SecurityBlockerMerchantPortalUserEventDispatcherPlugin $securityBlockerMerchantPortalUserEventDispatcherPlugin;
 
     protected function setUp(): void
@@ -68,5 +68,72 @@ class SecurityBlockerMerchantPortalUserEventDispatcherPluginTest extends Unit
             $eventDispatcherMock,
             $this->createMock(ContainerInterface::class),
         );
+    }
+
+    public function testPluginAddsTheIpOnlySubscriberForTheIpLoginProtectionStrategy(): void
+    {
+        // Arrange
+        $eventSubscriber = $this->createMock(EventSubscriberInterface::class);
+        $securityBlockerMerchantPortalGuiFactoryMock = $this->createFactoryMock(SecurityBlockerMerchantPortalGuiConfig::LOGIN_PROTECTION_STRATEGY_IP);
+        $securityBlockerMerchantPortalGuiFactoryMock->method('createSecurityBlockerMerchantPortalUserEventSubscriber')->willReturn($eventSubscriber);
+        $eventDispatcherMock = $this->createMock(EventDispatcherInterface::class);
+
+        // Assert
+        $securityBlockerMerchantPortalGuiFactoryMock->expects($this->never())->method('createSecurityBlockerMerchantPortalUserLoginEventSubscriber');
+        $eventDispatcherMock->expects($this->once())->method('addSubscriber')->with($this->identicalTo($eventSubscriber));
+
+        // Act
+        $this->createPlugin($securityBlockerMerchantPortalGuiFactoryMock)->extend($eventDispatcherMock, $this->createMock(ContainerInterface::class));
+    }
+
+    public function testPluginAddsTheLoginSubscriberForTheIpAndAccountLoginProtectionStrategy(): void
+    {
+        // Arrange
+        $eventSubscriber = $this->createMock(EventSubscriberInterface::class);
+        $securityBlockerMerchantPortalGuiFactoryMock = $this->createFactoryMock(SecurityBlockerMerchantPortalGuiConfig::LOGIN_PROTECTION_STRATEGY_IP_AND_ACCOUNT);
+        $securityBlockerMerchantPortalGuiFactoryMock->method('createSecurityBlockerMerchantPortalUserLoginEventSubscriber')->willReturn($eventSubscriber);
+        $eventDispatcherMock = $this->createMock(EventDispatcherInterface::class);
+
+        // Assert
+        $securityBlockerMerchantPortalGuiFactoryMock->expects($this->never())->method('createSecurityBlockerMerchantPortalUserEventSubscriber');
+        $eventDispatcherMock->expects($this->once())->method('addSubscriber')->with($this->identicalTo($eventSubscriber));
+
+        // Act
+        $this->createPlugin($securityBlockerMerchantPortalGuiFactoryMock)->extend($eventDispatcherMock, $this->createMock(ContainerInterface::class));
+    }
+
+    public function testPluginFailsForALoginProtectionStrategyWithoutARegisteredSubscriber(): void
+    {
+        // Arrange
+        $securityBlockerMerchantPortalGuiFactoryMock = $this->createFactoryMock(static::UNKNOWN_LOGIN_PROTECTION_STRATEGY);
+
+        // Expect
+        $this->expectException(InvalidArgumentException::class);
+
+        // Act
+        $this->createPlugin($securityBlockerMerchantPortalGuiFactoryMock)->extend($this->createMock(EventDispatcherInterface::class), $this->createMock(ContainerInterface::class));
+    }
+
+    protected function createFactoryMock(string $loginProtectionStrategy): SecurityBlockerMerchantPortalGuiCommunicationFactory&MockObject
+    {
+        $securityBlockerMerchantPortalGuiConfigMock = $this->createPartialMock(SecurityBlockerMerchantPortalGuiConfig::class, ['getLoginProtectionStrategy']);
+        $securityBlockerMerchantPortalGuiConfigMock->method('getLoginProtectionStrategy')->willReturn($loginProtectionStrategy);
+
+        $securityBlockerMerchantPortalGuiFactoryMock = $this->createPartialMock(SecurityBlockerMerchantPortalGuiCommunicationFactory::class, [
+            'createSecurityBlockerMerchantPortalUserEventSubscriber',
+            'createSecurityBlockerMerchantPortalUserLoginEventSubscriber',
+        ]);
+        $securityBlockerMerchantPortalGuiFactoryMock->setConfig($securityBlockerMerchantPortalGuiConfigMock);
+
+        return $securityBlockerMerchantPortalGuiFactoryMock;
+    }
+
+    protected function createPlugin(
+        SecurityBlockerMerchantPortalGuiCommunicationFactory $securityBlockerMerchantPortalGuiCommunicationFactory
+    ): SecurityBlockerMerchantPortalUserEventDispatcherPlugin {
+        $securityBlockerMerchantPortalUserEventDispatcherPlugin = new SecurityBlockerMerchantPortalUserEventDispatcherPlugin();
+        $securityBlockerMerchantPortalUserEventDispatcherPlugin->setFactory($securityBlockerMerchantPortalGuiCommunicationFactory);
+
+        return $securityBlockerMerchantPortalUserEventDispatcherPlugin;
     }
 }
